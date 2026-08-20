@@ -40,12 +40,12 @@ export default function SignupPage() {
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
         {/* Brand / Logo */}
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-indigo-200 bg-white text-indigo-600">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Create an Account</h2>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Create your account</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Sign up to save and track your favourite Indian colleges.
+            Join CollegesIN to search, filter, and bookmark India&apos;s top colleges in one place.
           </p>
         </div>
 

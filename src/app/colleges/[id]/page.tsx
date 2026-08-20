@@ -108,36 +108,47 @@ export default function CollegeDetailPage({ params }: PageProps) {
     };
   }, [id, supabase]);
 
-  // Handle Save College Action
+  // Handle Save/Unsave College toggle
   const handleSave = async () => {
     if (!user) {
-      setSaveMessage("Please log in to save colleges.");
+      setSaveMessage("Log in to save colleges.");
       setTimeout(() => setSaveMessage(null), 3000);
       return;
     }
 
     setSaving(true);
     setSaveMessage(null);
+    const wasAlreadySaved = isSaved;
+    setIsSaved(!wasAlreadySaved); // optimistic
 
     try {
-      const res = await fetch("/api/saved", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ collegeId: id }),
-      });
-
-      if (res.ok) {
-        setIsSaved(true);
-        setSaveMessage("Saved!");
-        setTimeout(() => setSaveMessage(null), 3000);
+      if (wasAlreadySaved) {
+        const res = await fetch(`/api/saved/${id}`, { method: "DELETE" });
+        if (!res.ok && res.status !== 404) {
+          setIsSaved(true); // roll back
+          setSaveMessage("Failed to unsave. Try again.");
+        } else {
+          setSaveMessage("Removed from saved.");
+          setTimeout(() => setSaveMessage(null), 2500);
+        }
       } else {
-        const errData = await res.json();
-        setSaveMessage(errData.error || "Failed to save college.");
+        const res = await fetch("/api/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ collegeId: id }),
+        });
+        if (!res.ok) {
+          setIsSaved(false); // roll back
+          const errData = await res.json();
+          setSaveMessage(errData.error || "Failed to save.");
+        } else {
+          setSaveMessage("Saved!");
+          setTimeout(() => setSaveMessage(null), 2500);
+        }
       }
     } catch (err) {
-      console.error("Error saving college:", err);
+      console.error("Error toggling save:", err);
+      setIsSaved(wasAlreadySaved); // roll back
       setSaveMessage("Error connecting to server.");
     } finally {
       setSaving(false);
@@ -227,22 +238,22 @@ export default function CollegeDetailPage({ params }: PageProps) {
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center md:flex-col md:items-end">
               <button
                 onClick={handleSave}
-                disabled={isSaved || saving}
+                disabled={saving}
                 className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-bold shadow-sm transition-all duration-200 border ${
                   isSaved
-                    ? "bg-emerald-50 border-emerald-100 text-emerald-700 shadow-emerald-50 cursor-default"
+                    ? "bg-emerald-50 border-emerald-100 text-emerald-700 shadow-emerald-50 hover:bg-red-50 hover:border-red-100 hover:text-red-600"
                     : "bg-indigo-600 border-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 hover:shadow-md"
                 }`}
               >
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
+                    {isSaved ? "Removing..." : "Saving..."}
                   </>
                 ) : isSaved ? (
                   <>
-                    <BookmarkCheck className="h-4 w-4 fill-emerald-100" />
-                    Saved!
+                    <BookmarkCheck className="h-4 w-4" />
+                    Saved
                   </>
                 ) : (
                   <>

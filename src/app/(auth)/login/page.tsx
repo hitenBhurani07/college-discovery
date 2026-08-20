@@ -45,12 +45,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
         {/* Brand / Logo */}
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-200">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Welcome Back</h2>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Sign in to search, filter, and save top Indian colleges.
+            Sign in to pick up where you left off — your saved colleges and searches are waiting.
           </p>
         </div>
 

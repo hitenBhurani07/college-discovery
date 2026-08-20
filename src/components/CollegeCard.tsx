@@ -8,11 +8,13 @@ import { College } from "@/generated/prisma/client";
 interface CollegeCardProps {
   college: College;
   initialSaved?: boolean;
+  onUnsave?: (collegeId: string) => void;
 }
 
-export default function CollegeCard({ college, initialSaved = false }: CollegeCardProps) {
+export default function CollegeCard({ college, initialSaved = false, onUnsave }: CollegeCardProps) {
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const formatFees = (amount: number) => {
     if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -40,6 +42,9 @@ export default function CollegeCard({ college, initialSaved = false }: CollegeCa
         if (!res.ok && res.status !== 404) {
           // Roll back optimistic update on unexpected error
           setIsSaved(true);
+        } else {
+          // Notify parent (e.g. saved page) to remove this card
+          onUnsave?.(college.id);
         }
       } else {
         // Save — POST
@@ -49,9 +54,13 @@ export default function CollegeCard({ college, initialSaved = false }: CollegeCa
           body: JSON.stringify({ collegeId: college.id }),
         });
         if (res.status === 401) {
-          // Not logged in — revert and let user know via URL
+          // Not logged in — show toast then redirect
           setIsSaved(false);
-          window.location.href = "/login";
+          setToast("Log in to save colleges");
+          setTimeout(() => {
+            setToast(null);
+            window.location.href = "/login";
+          }, 1500);
           return;
         }
         if (!res.ok) {
@@ -68,6 +77,12 @@ export default function CollegeCard({ college, initialSaved = false }: CollegeCa
 
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-50/50">
+      {/* Toast notification for unauthenticated save attempt */}
+      {toast && (
+        <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center rounded-b-2xl bg-gray-900/90 px-4 py-2.5 text-xs font-semibold text-white animate-in slide-in-from-bottom duration-200">
+          {toast} — <span className="ml-1 underline">redirecting&hellip;</span>
+        </div>
+      )}
       {/* Header: Location & Rating */}
       <div>
         <div className="flex items-center justify-between gap-2 text-xs">

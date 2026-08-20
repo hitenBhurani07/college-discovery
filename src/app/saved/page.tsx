@@ -172,7 +172,16 @@ export default function SavedCollegesPage() {
           /* Bookmarks Grid */
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
             {savedColleges.map((item) => (
-              <CollegeCard key={item.collegeId} college={item.college} />
+              <CollegeCard
+                key={item.collegeId}
+                college={item.college}
+                initialSaved={true}
+                onUnsave={(collegeId) =>
+                  setSavedColleges((prev) =>
+                    prev.filter((s) => s.collegeId !== collegeId)
+                  )
+                }
+              />
             ))}
           </div>
         )}
