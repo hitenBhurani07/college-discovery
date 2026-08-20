@@ -223,7 +223,7 @@ function CompareContent() {
   const comparedColleges = collegesDetails;
 
   // Helper to generate a detailed summary based on compared colleges
-  const renderComparisonSummary = () => {
+  const renderComparisonSummary = (bestPkgCollegeId: string | null) => {
     if (comparedColleges.length < 2) return null;
 
     const insights: { title: string; desc: React.ReactNode }[] = [];
@@ -237,7 +237,7 @@ function CompareContent() {
         desc: (
           <span>
             All selected colleges are rated equally at{" "}
-            <span className="font-extrabold text-indigo-600">
+            <span className="font-extrabold text-amber-700 bg-amber-50 border border-amber-200/40 px-2 py-0.5 rounded-lg text-xs">
               {maxRating.toFixed(1)}/5.0
             </span>.
           </span>
@@ -252,7 +252,7 @@ function CompareContent() {
               {bestRated.map((c) => c.name).join(" and ")}
             </span>{" "}
             {bestRated.length > 1 ? "lead" : "leads"} in academic quality with a rating of{" "}
-            <span className="font-extrabold text-indigo-600">
+            <span className="font-extrabold text-amber-700 bg-amber-50 border border-amber-200/40 px-2 py-0.5 rounded-lg text-xs">
               {maxRating.toFixed(1)}/5.0
             </span>.
           </span>
@@ -272,7 +272,7 @@ function CompareContent() {
             {mostAffordable.map((c) => c.name).join(" and ")}
           </span>{" "}
           {mostAffordable.length > 1 ? "are" : "is"} the most economical choice with maximum course fees capped at{" "}
-          <span className="font-extrabold text-emerald-600">
+          <span className="font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/40 px-2 py-0.5 rounded-lg text-xs">
             {formatFeesAbbr(lowestMaxFee)}
           </span>.
         </span>
@@ -303,7 +303,7 @@ function CompareContent() {
               {bestPkgColleges.map((p) => p.college.name).join(" and ")}
             </span>{" "}
             {bestPkgColleges.length > 1 ? "offer" : "offers"} the highest average salary package of{" "}
-            <span className="font-extrabold text-indigo-600">
+            <span className="font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100/40 px-2 py-0.5 rounded-lg text-xs">
               {formatINR(highestPkg)}
             </span>.
           </span>
@@ -321,7 +321,7 @@ function CompareContent() {
               {bestRateColleges.map((p) => p.college.name).join(" and ")}
             </span>{" "}
             achieved the best placement rate of{" "}
-            <span className="font-extrabold text-emerald-600">
+            <span className="font-extrabold text-purple-700 bg-purple-50 border border-purple-100/40 px-2 py-0.5 rounded-lg text-xs">
               {highestRate.toFixed(1)}%
             </span>.
           </span>
@@ -345,33 +345,54 @@ function CompareContent() {
 
     return (
       <div className="mt-10 rounded-2xl bg-gradient-to-br from-indigo-50/40 via-white to-slate-100/40 border border-indigo-100/50 p-6 shadow-sm shadow-indigo-100/5 animate-in fade-in duration-300">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/10">
             <Sparkles className="h-4.5 w-4.5 fill-white" />
           </div>
-          <h3 className="text-base font-black text-slate-900">
-            Smart Comparison Recommendation Summary
+          <h3 className="text-base font-black text-slate-900 tracking-tight">
+            Comparison Recommendation Report
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        {/* Insight Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
           {insights.map((insight, i) => (
-            <div key={i} className="rounded-xl border border-slate-100 bg-white p-4.5 shadow-sm">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
-                {insight.title}
-              </p>
-              <div className="text-xs font-semibold text-slate-600 leading-relaxed">
+            <div key={i} className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm hover:border-slate-200 transition-colors">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className={`h-1.5 w-1.5 rounded-full ${
+                  insight.title === "Academic Rating" ? "bg-amber-500" :
+                  insight.title === "Cost & Budget" ? "bg-emerald-500" :
+                  insight.title === "Career Placements" ? "bg-indigo-500" : "bg-purple-500"
+                }`} />
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                  {insight.title}
+                </p>
+              </div>
+              <div className="text-sm font-semibold text-slate-600 leading-relaxed">
                 {insight.desc}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="border-t border-slate-100 pt-4 text-xs font-bold text-slate-400 uppercase tracking-wide">
-          Best Recommendation:{" "}
-          <span className="text-indigo-600">
-            {conclusion}
-          </span>
+        {/* Executive Verdict callout banner */}
+        <div className="rounded-2xl bg-indigo-600 p-6 text-white shadow-xl shadow-indigo-600/15 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-[9px] font-extrabold uppercase tracking-widest text-indigo-200">
+              Executive Match Verdict
+            </p>
+            <p className="text-sm font-extrabold leading-snug mt-1.5 max-w-3xl">
+              {conclusion}
+            </p>
+          </div>
+          {bestPkgCollegeId && (
+            <Link
+              href={`/colleges/${bestPkgCollegeId}`}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-white hover:bg-slate-50 text-indigo-700 px-4 py-2.5 text-xs font-black shadow-md hover:shadow transition-all duration-200 active:scale-95 hover:-translate-y-0.5 cursor-pointer"
+            >
+              Explore Best Match
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -432,13 +453,16 @@ function CompareContent() {
               {/* Columns 2-4: Comparison slots */}
               {[...Array(slotsCount)].map((_, index) => {
                 const college = comparedColleges[index];
+                const isRecommended = college && college.id === bestMetrics.packageId && comparedColleges.length >= 2;
 
                 return (
                   <div 
                     key={index}
-                    className={`rounded-2xl border ${
+                    className={`rounded-2xl border transition-all duration-300 ${
                       college 
-                        ? "border-slate-200 bg-white shadow-sm" 
+                        ? isRecommended
+                          ? "border-indigo-500 bg-white shadow-lg ring-2 ring-indigo-500/10 scale-[1.01]"
+                          : "border-slate-200 bg-white shadow-sm hover:border-slate-300"
                         : "border-dashed border-slate-300 bg-slate-50/50 p-6 flex flex-col items-center justify-center text-center min-h-[450px]"
                     }`}
                   >
@@ -456,9 +480,17 @@ function CompareContent() {
                         {/* Top Header Card */}
                         <div className="p-5 border-b border-slate-100 min-h-[260px] flex flex-col justify-between">
                           <div>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-100/40 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 shadow-sm shadow-indigo-100/10">
-                              Slot {index + 1}
-                            </span>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-100/40 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 shadow-sm shadow-indigo-100/10">
+                                Slot {index + 1}
+                              </span>
+                              {isRecommended && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm shadow-indigo-200">
+                                  <Sparkles className="h-2.5 w-2.5 fill-white animate-pulse" />
+                                  Best Match
+                                </span>
+                              )}
+                            </div>
                             <h3 className="mt-3 text-lg font-black tracking-tight text-slate-900 line-clamp-2 hover:text-indigo-600 leading-snug">
                               <Link href={`/colleges/${college.id}`}>{college.name}</Link>
                             </h3>
@@ -600,7 +632,7 @@ function CompareContent() {
             </div>
 
             {/* Recommendation Summary */}
-            {renderComparisonSummary()}
+            {renderComparisonSummary(bestMetrics.packageId)}
             
             {/* Empty comparison warning */}
             {comparedColleges.length === 0 && (
