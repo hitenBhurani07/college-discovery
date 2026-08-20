@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { User } from "@supabase/supabase-js";
-import { GraduationCap, Bookmark, LogIn, LogOut, Menu, X } from "lucide-react";
+import { GraduationCap, Bookmark, LogIn, LogOut, Menu, X, GitCompare } from "lucide-react";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -61,6 +61,13 @@ export default function Navbar() {
             className="text-sm font-semibold text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-all duration-200"
           >
             Browse Colleges
+          </Link>
+          <Link
+            href="/compare"
+            className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-all duration-200"
+          >
+            <GitCompare className="h-4 w-4 stroke-[2]" />
+            Compare
           </Link>
           {user && (
             <Link
@@ -124,6 +131,14 @@ export default function Navbar() {
               className="text-base font-semibold text-slate-700 hover:text-indigo-600 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-all py-2"
             >
               Browse Colleges
+            </Link>
+            <Link
+              href="/compare"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 text-base font-semibold text-slate-700 hover:text-indigo-600 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-all py-2"
+            >
+              <GitCompare className="h-5 w-5 stroke-[2]" />
+              Compare
             </Link>
             {user && (
               <Link

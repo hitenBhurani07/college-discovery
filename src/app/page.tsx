@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CollegeCard from "@/components/CollegeCard";
 import { College } from "@/generated/prisma/client";
-import { Search, X, Sparkles, AlertCircle, SlidersHorizontal } from "lucide-react";
+import { Search, X, Sparkles, AlertCircle, SlidersHorizontal, ChevronLeft, ChevronRight, GitCompare } from "lucide-react";
+import { getCompareList, clearCompareList } from "@/lib/compareStore";
 
 // All distinct cities in the seeded dataset
 const LOCATIONS = [
@@ -36,6 +37,7 @@ function SearchBar() {
       } else {
         params.delete("search");
       }
+      params.delete("page"); // Reset page to 1 on search change
       router.replace(`/?${params.toString()}`, { scroll: false });
     }, 300);
     return () => clearTimeout(handler);
@@ -100,6 +102,7 @@ function FiltersBar() {
     set("minRating", next.minRating);
     set("minFees", next.minFees);
     set("maxFees", next.maxFees);
+    params.delete("page"); // Reset page to 1 on filter change
 
     router.replace(`/?${params.toString()}`, { scroll: false });
   };
@@ -119,7 +122,7 @@ function FiltersBar() {
     setMinFees("");
     setMaxFees("");
     const params = new URLSearchParams(searchParams.toString());
-    ["location", "minRating", "minFees", "maxFees"].forEach((k) => params.delete(k));
+    ["location", "minRating", "minFees", "maxFees", "page"].forEach((k) => params.delete(k));
     router.replace(`/?${params.toString()}`, { scroll: false });
   };
 
@@ -197,15 +200,40 @@ function FiltersBar() {
 // ─── CollegeGrid (isolated Suspense boundary) ────────────────────────────────
 function CollegeGrid() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [colleges, setColleges] = useState<College[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [compareList, setCompareList] = useState<College[]>([]);
+
+  // Pagination states
+  const [meta, setMeta] = useState({
+    total: 0,
+    page: 1,
+    limit: 9,
+    totalPages: 1,
+  });
 
   const search = searchParams.get("search") || "";
   const location = searchParams.get("location") || "";
   const minRating = searchParams.get("minRating") || "";
   const minFees = searchParams.get("minFees") || "";
   const maxFees = searchParams.get("maxFees") || "";
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
+
+  // Fetch comparison list state on mount & synchronize
+  useEffect(() => {
+    setCompareList(getCompareList());
+
+    const handleCompareUpdate = () => {
+      setCompareList(getCompareList());
+    };
+
+    window.addEventListener("compare-updated", handleCompareUpdate);
+    return () => {
+      window.removeEventListener("compare-updated", handleCompareUpdate);
+    };
+  }, []);
 
   // Fetch saved IDs once (non-blocking; 401 is expected when logged out)
   useEffect(() => {
@@ -229,11 +257,14 @@ function CollegeGrid() {
         if (minRating) params.set("minRating", minRating);
         if (minFees) params.set("minFees", minFees);
         if (maxFees) params.set("maxFees", maxFees);
+        params.set("page", page.toString());
+        params.set("limit", "9"); // 9 is ideal for a 3-column layout grid
 
         const res = await fetch(`/api/colleges?${params.toString()}`);
         if (res.ok && active) {
           const json = await res.json();
           setColleges(json.data || []);
+          setMeta(json.meta || { total: 0, page: 1, limit: 9, totalPages: 1 });
         }
       } catch (err) {
         console.error("Error fetching colleges:", err);
@@ -244,7 +275,13 @@ function CollegeGrid() {
 
     fetchColleges();
     return () => { active = false; };
-  }, [search, location, minRating, minFees, maxFees]);
+  }, [search, location, minRating, minFees, maxFees, page]);
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`/?${params.toString()}`, { scroll: true });
+  };
 
   if (loading) return <CollegeGridSkeleton />;
 
@@ -263,12 +300,15 @@ function CollegeGrid() {
   }
 
   return (
-    <div className="animate-in fade-in duration-300">
+    <div className="animate-in fade-in duration-300 pb-16">
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">
-          Showing <span className="font-semibold text-gray-900">{colleges.length}</span> colleges
+        <p className="text-sm font-medium text-slate-500">
+          Showing <span className="font-semibold text-slate-900">{colleges.length}</span> of{" "}
+          <span className="font-semibold text-slate-900">{meta.total}</span> colleges
         </p>
       </div>
+      
+      {/* College Cards Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {colleges.map((college) => (
           <CollegeCard
@@ -278,6 +318,79 @@ function CollegeGrid() {
           />
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {meta.totalPages > 1 && (
+        <div className="mt-12 flex items-center justify-center gap-2 border-t border-slate-200/60 pt-6">
+          <button
+            onClick={() => handlePageChange(meta.page - 1)}
+            disabled={meta.page === 1}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
+          >
+            <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+            Prev
+          </button>
+
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePageChange(p)}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-extrabold shadow-sm transition-all cursor-pointer ${
+                  meta.page === p
+                    ? "bg-indigo-600 text-white shadow-indigo-100"
+                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => handlePageChange(meta.page + 1)}
+            disabled={meta.page === meta.totalPages}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
+          >
+            Next
+            <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+          </button>
+        </div>
+      )}
+
+      {/* Floating Compare Bar */}
+      {compareList.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl px-5 py-3.5 shadow-2xl text-white flex items-center justify-between gap-4 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-md shadow-indigo-500/20">
+              <GitCompare className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold tracking-tight">Compare Colleges</p>
+              <p className="text-xs font-semibold text-slate-400">
+                {compareList.length} of 3 selected
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                window.location.href = `/compare?ids=${compareList.map((c) => c.id).join(",")}`;
+              }}
+              className="rounded-xl bg-white text-slate-900 hover:bg-slate-100 px-4 py-2 text-xs font-extrabold transition-all duration-200 cursor-pointer active:scale-95 shadow-sm"
+            >
+              Compare Now
+            </button>
+            <button
+              onClick={() => clearCompareList()}
+              className="rounded-xl border border-slate-700 text-slate-400 hover:text-white px-3 py-2 text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

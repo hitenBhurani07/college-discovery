@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Star, MapPin, IndianRupee, Bookmark, BookmarkCheck, ChevronRight, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, MapPin, IndianRupee, Bookmark, BookmarkCheck, ChevronRight, Loader2, GitCompare } from "lucide-react";
 import { College } from "@/generated/prisma/client";
+import { isInCompare, addToCompare, removeFromCompare } from "@/lib/compareStore";
 
 interface CollegeCardProps {
   college: College;
@@ -15,6 +16,20 @@ export default function CollegeCard({ college, initialSaved = false, onUnsave }:
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [isCompared, setIsCompared] = useState(false);
+
+  useEffect(() => {
+    setIsCompared(isInCompare(college.id));
+
+    const handleCompareUpdate = () => {
+      setIsCompared(isInCompare(college.id));
+    };
+
+    window.addEventListener("compare-updated", handleCompareUpdate);
+    return () => {
+      window.removeEventListener("compare-updated", handleCompareUpdate);
+    };
+  }, [college.id]);
 
   const formatFees = (amount: number) => {
     if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -75,12 +90,24 @@ export default function CollegeCard({ college, initialSaved = false, onUnsave }:
     }
   };
 
+  const handleCompareToggle = () => {
+    if (isCompared) {
+      removeFromCompare(college.id);
+    } else {
+      const res = addToCompare(college);
+      if (!res.success) {
+        setToast(res.error || "Cannot add to compare list");
+        setTimeout(() => setToast(null), 3000);
+      }
+    }
+  };
+
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50/30">
-      {/* Toast notification for unauthenticated save attempt */}
+      {/* Toast notification for errors / alerts */}
       {toast && (
         <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center rounded-b-2xl bg-slate-900/95 px-4 py-3 text-xs font-semibold text-white animate-in slide-in-from-bottom duration-200">
-          {toast} — <span className="ml-1 underline">redirecting&hellip;</span>
+          {toast}
         </div>
       )}
       {/* Header: Location & Rating */}
@@ -121,6 +148,19 @@ export default function CollegeCard({ college, initialSaved = false, onUnsave }:
           View Details
           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
+
+        {/* Compare button */}
+        <button
+          onClick={handleCompareToggle}
+          className={`inline-flex items-center justify-center rounded-xl border p-2.5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97] shadow-sm ${
+            isCompared
+              ? "border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100/80"
+              : "border-slate-200 bg-white text-slate-400 hover:bg-slate-50 hover:border-slate-300 hover:text-indigo-600"
+          }`}
+          title={isCompared ? "Remove from Compare" : "Compare College"}
+        >
+          <GitCompare className="h-5 w-5 stroke-[2]" />
+        </button>
 
         {/* Bookmark button — wired to POST/DELETE /api/saved */}
         <button
