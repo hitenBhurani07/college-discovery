@@ -8,7 +8,7 @@ import {
   Search, Trash2, TrendingUp, BookOpen, AlertCircle, Loader2, Sparkles
 } from "lucide-react";
 import { College, Course, Placement } from "@/generated/prisma/client";
-import { removeFromCompare, addToCompare } from "@/lib/compareStore";
+import { removeFromCompare, addToCompare, getCompareList } from "@/lib/compareStore";
 
 interface CollegeWithRelations extends College {
   courses: Course[];
@@ -125,6 +125,20 @@ function CompareContent() {
       .catch((err) => console.error("Error fetching all colleges list:", err));
   }, []);
 
+  // Redirect to compared items in localStorage if the URL ids are empty on load
+  useEffect(() => {
+    const currentIds = searchParams.get("ids")?.split(",").filter(Boolean) || [];
+    if (currentIds.length === 0) {
+      const localList = getCompareList();
+      if (localList.length > 0) {
+        const localIds = localList.map((c) => c.id);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("ids", localIds.join(","));
+        router.replace(`/compare?${params.toString()}`);
+      }
+    }
+  }, [searchParams, router]);
+
   // Fetch details when selectedIds change
   useEffect(() => {
     if (selectedIds.length === 0) {
@@ -148,7 +162,14 @@ function CompareContent() {
       })
     )
       .then((results) => {
-        setCollegesDetails(results.filter(Boolean) as CollegeWithRelations[]);
+        const validColleges = results.filter(Boolean) as CollegeWithRelations[];
+        setCollegesDetails(validColleges);
+
+        // Sync back with localStorage to ensure consistency (e.g. if loaded via link or items removed)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("colleges_compare_list", JSON.stringify(validColleges));
+          window.dispatchEvent(new CustomEvent("compare-updated"));
+        }
       })
       .catch((err) => console.error("Error fetching details:", err))
       .finally(() => setLoadingDetails(false));
