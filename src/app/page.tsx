@@ -30,6 +30,9 @@ function SearchBar() {
   const [searchVal, setSearchVal] = useState(searchParams.get("search") || "");
 
   useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (currentSearch === searchVal) return;
+
     const handler = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (searchVal) {
@@ -109,10 +112,14 @@ function FiltersBar() {
 
   // Debounce fee inputs
   useEffect(() => {
+    const urlMin = searchParams.get("minFees") || "";
+    const urlMax = searchParams.get("maxFees") || "";
+    if (minFees === urlMin && maxFees === urlMax) return;
+
     const handler = setTimeout(() => pushFilters({}), 400);
     return () => clearTimeout(handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minFees, maxFees]);
+  }, [minFees, maxFees, searchParams]);
 
   const hasActiveFilters = location || minRating || minFees || maxFees;
 

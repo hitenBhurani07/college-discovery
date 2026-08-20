@@ -222,6 +222,161 @@ function CompareContent() {
   const slotsCount = 3;
   const comparedColleges = collegesDetails;
 
+  // Helper to generate a detailed summary based on compared colleges
+  const renderComparisonSummary = () => {
+    if (comparedColleges.length < 2) return null;
+
+    const insights: { title: string; desc: React.ReactNode }[] = [];
+
+    // 1. Rating comparison
+    const maxRating = Math.max(...comparedColleges.map((c) => c.rating));
+    const bestRated = comparedColleges.filter((c) => c.rating === maxRating);
+    if (bestRated.length === comparedColleges.length) {
+      insights.push({
+        title: "Academic Rating",
+        desc: (
+          <span>
+            All selected colleges are rated equally at{" "}
+            <span className="font-extrabold text-indigo-600">
+              {maxRating.toFixed(1)}/5.0
+            </span>.
+          </span>
+        ),
+      });
+    } else {
+      insights.push({
+        title: "Academic Rating",
+        desc: (
+          <span>
+            <span className="font-extrabold text-slate-800">
+              {bestRated.map((c) => c.name).join(" and ")}
+            </span>{" "}
+            {bestRated.length > 1 ? "lead" : "leads"} in academic quality with a rating of{" "}
+            <span className="font-extrabold text-indigo-600">
+              {maxRating.toFixed(1)}/5.0
+            </span>.
+          </span>
+        ),
+      });
+    }
+
+    // 2. Budget/Fees comparison
+    const lowestMaxFee = Math.min(...comparedColleges.map((c) => c.feesMax));
+    const mostAffordable = comparedColleges.filter((c) => c.feesMax === lowestMaxFee);
+    insights.push({
+      title: "Cost & Budget",
+      desc: (
+        <span>
+          For budget-conscious options,{" "}
+          <span className="font-extrabold text-slate-800">
+            {mostAffordable.map((c) => c.name).join(" and ")}
+          </span>{" "}
+          {mostAffordable.length > 1 ? "are" : "is"} the most economical choice with maximum course fees capped at{" "}
+          <span className="font-extrabold text-emerald-600">
+            {formatFeesAbbr(lowestMaxFee)}
+          </span>.
+        </span>
+      ),
+    });
+
+    // 3. Placement packages
+    const placementData = comparedColleges.map((c) => {
+      const lp = getLatestPlacement(c);
+      return { college: c, lp };
+    });
+
+    const hasPlacements = placementData.some((p) => p.lp !== null);
+    if (hasPlacements) {
+      const validPlacements = placementData.filter((p) => p.lp !== null) as {
+        college: CollegeWithRelations;
+        lp: Placement;
+      }[];
+
+      const highestPkg = Math.max(...validPlacements.map((p) => p.lp.avgPackage));
+      const bestPkgColleges = validPlacements.filter((p) => p.lp.avgPackage === highestPkg);
+
+      insights.push({
+        title: "Career Placements",
+        desc: (
+          <span>
+            <span className="font-extrabold text-slate-800">
+              {bestPkgColleges.map((p) => p.college.name).join(" and ")}
+            </span>{" "}
+            {bestPkgColleges.length > 1 ? "offer" : "offers"} the highest average salary package of{" "}
+            <span className="font-extrabold text-indigo-600">
+              {formatINR(highestPkg)}
+            </span>.
+          </span>
+        ),
+      });
+
+      const highestRate = Math.max(...validPlacements.map((p) => p.lp.placementRate));
+      const bestRateColleges = validPlacements.filter((p) => p.lp.placementRate === highestRate);
+
+      insights.push({
+        title: "Placement Rate",
+        desc: (
+          <span>
+            <span className="font-extrabold text-slate-800">
+              {bestRateColleges.map((p) => p.college.name).join(" and ")}
+            </span>{" "}
+            achieved the best placement rate of{" "}
+            <span className="font-extrabold text-emerald-600">
+              {highestRate.toFixed(1)}%
+            </span>.
+          </span>
+        ),
+      });
+    }
+
+    // Recommendation logic
+    let conclusion = "Select the college that best matches your budget and rating targets.";
+    if (hasPlacements) {
+      const validPlacements = placementData.filter((p) => p.lp !== null) as {
+        college: CollegeWithRelations;
+        lp: Placement;
+      }[];
+      const highestPkg = Math.max(...validPlacements.map((p) => p.lp.avgPackage));
+      const bestPkgColleges = validPlacements.filter((p) => p.lp.avgPackage === highestPkg);
+      if (bestPkgColleges.length > 0) {
+        conclusion = `${bestPkgColleges.map((p) => p.college.name).join(" & ")} offers the best overall career returns based on average placement package statistics.`;
+      }
+    }
+
+    return (
+      <div className="mt-10 rounded-2xl bg-gradient-to-br from-indigo-50/40 via-white to-slate-100/40 border border-indigo-100/50 p-6 shadow-sm shadow-indigo-100/5 animate-in fade-in duration-300">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/10">
+            <Sparkles className="h-4.5 w-4.5 fill-white" />
+          </div>
+          <h3 className="text-base font-black text-slate-900">
+            Smart Comparison Recommendation Summary
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+          {insights.map((insight, i) => (
+            <div key={i} className="rounded-xl border border-slate-100 bg-white p-4.5 shadow-sm">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+                {insight.title}
+              </p>
+              <div className="text-xs font-semibold text-slate-600 leading-relaxed">
+                {insight.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-slate-100 pt-4 text-xs font-bold text-slate-400 uppercase tracking-wide">
+          Best Recommendation:{" "}
+          <span className="text-indigo-600">
+            {conclusion}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       {/* Top Banner Navigation */}
@@ -443,6 +598,9 @@ function CompareContent() {
                 );
               })}
             </div>
+
+            {/* Recommendation Summary */}
+            {renderComparisonSummary()}
             
             {/* Empty comparison warning */}
             {comparedColleges.length === 0 && (
