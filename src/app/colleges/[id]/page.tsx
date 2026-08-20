@@ -4,29 +4,12 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
 import { User } from "@supabase/supabase-js";
-import { Star, MapPin, IndianRupee, Bookmark, BookmarkCheck, ArrowLeft, Loader2, Calendar, TrendingUp, BookOpen, AlertCircle, GraduationCap } from "lucide-react";
+import { Star, MapPin, IndianRupee, Bookmark, BookmarkCheck, ArrowLeft, Loader2, Calendar, TrendingUp, BookOpen, AlertCircle, GraduationCap, GitCompare } from "lucide-react";
+import { isInCompare, addToCompare, removeFromCompare } from "@/lib/compareStore";
 
-interface Course {
-  id: string;
-  name: string;
-  duration: string;
-  fees: number;
-}
+import { College as PrismaCollege, Course, Placement } from "@/generated/prisma/client";
 
-interface Placement {
-  id: string;
-  year: number;
-  avgPackage: number;
-  placementRate: number;
-}
-
-interface College {
-  id: string;
-  name: string;
-  location: string;
-  rating: number;
-  feesMin: number;
-  feesMax: number;
+interface College extends PrismaCollege {
   courses: Course[];
   placements: Placement[];
 }
@@ -48,6 +31,33 @@ export default function CollegeDetailPage({ params }: PageProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isCompared, setIsCompared] = useState(false);
+
+  useEffect(() => {
+    if (college) {
+      setIsCompared(isInCompare(college.id));
+    }
+    const handleCompareUpdate = () => {
+      if (college) {
+        setIsCompared(isInCompare(college.id));
+      }
+    };
+    window.addEventListener("compare-updated", handleCompareUpdate);
+    return () => window.removeEventListener("compare-updated", handleCompareUpdate);
+  }, [college]);
+
+  const handleCompareToggle = () => {
+    if (!college) return;
+    if (isCompared) {
+      removeFromCompare(college.id);
+    } else {
+      const res = addToCompare(college);
+      if (!res.success) {
+        setSaveMessage(res.error || "Cannot add to compare list");
+        setTimeout(() => setSaveMessage(null), 3000);
+      }
+    }
+  };
 
   // Fetch college details
   useEffect(() => {
@@ -234,34 +244,48 @@ export default function CollegeDetailPage({ params }: PageProps) {
               </p>
             </div>
 
-            {/* Action Save button */}
+            {/* Action buttons */}
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center md:flex-col md:items-end">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-bold shadow-sm transition-all duration-200 border ${
-                  isSaved
-                    ? "bg-emerald-50 border-emerald-100 text-emerald-700 shadow-emerald-50 hover:bg-red-50 hover:border-red-100 hover:text-red-600"
-                    : "bg-indigo-600 border-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 hover:shadow-md"
-                }`}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {isSaved ? "Removing..." : "Saving..."}
-                  </>
-                ) : isSaved ? (
-                  <>
-                    <BookmarkCheck className="h-4 w-4" />
-                    Saved
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="h-4 w-4" />
-                    Save College
-                  </>
-                )}
-              </button>
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-bold shadow-sm transition-all duration-200 border ${
+                    isSaved
+                      ? "bg-emerald-50 border-emerald-100 text-emerald-700 shadow-emerald-50 hover:bg-red-50 hover:border-red-100 hover:text-red-600"
+                      : "bg-indigo-600 border-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 hover:shadow-md"
+                  }`}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {isSaved ? "Removing..." : "Saving..."}
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <BookmarkCheck className="h-4 w-4" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="h-4 w-4" />
+                      Save College
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleCompareToggle}
+                  className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-bold shadow-sm transition-all duration-200 border ${
+                    isCompared
+                      ? "bg-indigo-50 border-indigo-100 text-indigo-700 shadow-indigo-50 hover:bg-red-50 hover:border-red-100 hover:text-red-600"
+                      : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  <GitCompare className="h-4 w-4" />
+                  {isCompared ? "In Comparison" : "Compare"}
+                </button>
+              </div>
 
               {/* Status notifications */}
               {saveMessage && (
