@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model College {
+  id         String         @id @default(uuid())
+  name       String
+  location   String
+  feesMin    Int
+  feesMax    Int
+  rating     Float
+  createdAt  DateTime       @default(now())
+  courses    Course[]
+  placements Placement[]
+  savedBy    SavedCollege[]
+
+  @@index([location])
+  @@index([rating])
+}
+
+model Course {
+  id        String  @id @default(uuid())
+  collegeId String
+  college   College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  name      String
+  duration  String
+  fees      Int
+}
+
+model Placement {
+  id            String  @id @default(uuid())
+  collegeId     String
+  college       College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  year          Int
+  avgPackage    Int
+  placementRate Float
+}
+
+model SavedCollege {
+  id        String   @id @default(uuid())
+  userId    String
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, collegeId])
+}
