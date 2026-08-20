@@ -47,21 +47,21 @@ function SearchBar() {
   }, [searchParams]);
 
   return (
-    <div className="relative rounded-2xl shadow-sm shadow-indigo-50">
-      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-        <Search className="h-5 w-5 text-gray-400" />
+    <div className="relative rounded-2xl shadow-md shadow-slate-100/80">
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4.5">
+        <Search className="h-5 w-5 text-slate-400 stroke-[2]" />
       </div>
       <input
         type="text"
         value={searchVal}
         onChange={(e) => setSearchVal(e.target.value)}
         placeholder="Search by college name (e.g., IIT, BITS)..."
-        className="block w-full rounded-2xl border border-gray-200 bg-white py-4 pl-12 pr-12 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
+        className="block w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-12 text-sm font-medium text-slate-900 placeholder-slate-400 hover:border-slate-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
       />
       {searchVal && (
         <button
           onClick={() => setSearchVal("")}
-          className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
@@ -124,9 +124,9 @@ function FiltersBar() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-        <SlidersHorizontal className="h-3.5 w-3.5" />
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <SlidersHorizontal className="h-3.5 w-3.5 stroke-[2.5]" />
         Filters
       </div>
 
@@ -137,7 +137,7 @@ function FiltersBar() {
           setLocation(e.target.value);
           pushFilters({ location: e.target.value });
         }}
-        className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+        className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 cursor-pointer"
       >
         <option value="">All Cities</option>
         {LOCATIONS.map((loc) => (
@@ -152,7 +152,7 @@ function FiltersBar() {
           setMinRating(e.target.value);
           pushFilters({ minRating: e.target.value });
         }}
-        className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+        className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 cursor-pointer"
       >
         {RATING_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -167,16 +167,16 @@ function FiltersBar() {
           value={minFees}
           onChange={(e) => setMinFees(e.target.value)}
           placeholder="Min ₹"
-          className="w-24 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+          className="w-24 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 placeholder-slate-400 hover:border-slate-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
         />
-        <span className="text-gray-400 text-sm">–</span>
+        <span className="text-slate-400 text-sm font-bold">–</span>
         <input
           type="number"
           min={0}
           value={maxFees}
           onChange={(e) => setMaxFees(e.target.value)}
           placeholder="Max ₹"
-          className="w-24 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+          className="w-24 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 placeholder-slate-400 hover:border-slate-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
         />
       </div>
 
@@ -184,10 +184,10 @@ function FiltersBar() {
       {hasActiveFilters && (
         <button
           onClick={clearAll}
-          className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+          className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 transition-colors px-3 py-2 rounded-xl bg-red-50/50 hover:bg-red-50 cursor-pointer"
         >
-          <X className="h-3.5 w-3.5" />
-          Clear filters
+          <X className="h-3.5 w-3.5 stroke-[2.5]" />
+          Clear
         </button>
       )}
     </div>
@@ -287,7 +287,7 @@ function CollegeGridSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div key={i} className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="h-4 w-24 rounded bg-gray-200" />
             <div className="h-4 w-12 rounded bg-gray-200" />
@@ -308,26 +308,26 @@ function CollegeGridSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-slate-50">
       {/* Hero + Search + Filters */}
-      <section className="bg-white border-b border-gray-100 py-12 sm:py-16">
+      <section className="bg-gradient-to-b from-white via-white to-slate-50 border-b border-slate-200/50 py-16 sm:py-20 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+          <div className="text-center animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100/60 px-3.5 py-1.5 text-xs font-extrabold text-indigo-700 shadow-sm shadow-indigo-100/10">
               <Sparkles className="h-3.5 w-3.5 fill-indigo-100" />
               Discover Colleges Instantly
             </div>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-              Find Your Dream College
+            <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl max-w-3xl mx-auto leading-[1.15]">
+              Find Your <span className="text-indigo-600">Dream College</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-gray-500 sm:text-lg">
-              Search, filter, and explore top-rated Indian colleges by name, city, rating, and fees.
+            <p className="mx-auto mt-4.5 max-w-2xl text-base font-medium text-slate-500 sm:text-lg">
+              Explore and search top-rated Indian colleges with real-time package stats, courses, locations, and pricing.
             </p>
 
             {/* Search input — its own Suspense boundary */}
-            <div className="mx-auto mt-8 max-w-xl">
+            <div className="mx-auto mt-9 max-w-xl">
               <Suspense fallback={
-                <div className="h-14 w-full animate-pulse rounded-2xl bg-gray-100 border border-gray-200" />
+                <div className="h-14 w-full animate-pulse rounded-2xl bg-slate-100 border border-slate-200" />
               }>
                 <SearchBar />
               </Suspense>
@@ -335,9 +335,9 @@ export default function Home() {
           </div>
 
           {/* Filters row — its own Suspense boundary */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-8 flex justify-center">
             <Suspense fallback={
-              <div className="h-10 w-full max-w-2xl animate-pulse rounded-xl bg-gray-100" />
+              <div className="h-10 w-full max-w-2xl animate-pulse rounded-xl bg-slate-100 border border-slate-200" />
             }>
               <FiltersBar />
             </Suspense>
